@@ -29,10 +29,10 @@ Open http://localhost:3000 — the MFE renders the headers the mock API received
 | `IDNT_HOST_MAFIL` | host | `poc-idnt-host-mafil` |
 | `COOKIE_DOMAIN` | host (cookie `domain`) | empty (host-only cookie; set `.ips.gov.il` in real environments) |
 | `MFE_EXAMPLE_URL` | host (remote URL) | `http://localhost:3001` |
-| `MFE_BASE_URL` | mfe-example (`microFrontendReferrer`) | `http://localhost:3001` |
+| `MFE_BASE_URL` | mfe-example (`microFrontentRefrerr`) | `http://localhost:3001` |
 
 ## Notes
 
 - `axios` and `digital-utils` must resolve to the same versions in all projects; both apps spread `digital-utils/sharedConfig` into their `shared` so the singleton config can't drift.
 - In the host, `bootstrap.ts` calls `initHttpClient` and only then dynamically imports `App` — never call `http()` from code that is statically imported before init.
-- The host is itself an MFE: its own API calls go through `apps/host/src/api/httpClient.ts` (`createMfeHttp` with `idntObjectPPR: IDNT_OBJECT_PPR`), so they carry `idntObjectPPR`, `IPS_PPRID`, `microFrontendReferrer` and `isFirstMfeRequest` like any other MFE. Don't call `http()` directly for host API calls.
+- The host is itself an MFE: its own API calls go through `apps/host/src/api/httpClient.ts` (`createMfeHttp` with `idntObjectPPR: IDNT_OBJECT_PPR`), so they carry `idntObjectPPR`, `IPS_PPRID`, `microFrontentRefrerr` and `isFirstMfeRequest` like any other MFE. Don't call `http()` directly for host API calls.

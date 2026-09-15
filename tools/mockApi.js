@@ -7,7 +7,6 @@ const TRACKED_HEADERS = [
   "isfirsthostrequest",
   "idnthostmafil",
   "sessionguid",
-  "microfrontendreferrer",
   "isfirstmferequest",
 ];
 
