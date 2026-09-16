@@ -28,6 +28,14 @@ export function getMfeHeaders(identity: MfeIdentity): Record<string, string> {
   };
 }
 
+/**
+ * Forgets that this MFE already made a request, so its next request reports isFirstMfeRequest=true again.
+ * Call it when the MFE is closed/unmounted — otherwise the flag stays false until the next full page load.
+ */
+export function releaseMfe(idntObjectPPR: string): void {
+  getRegistry().delete(idntObjectPPR);
+}
+
 function withMfeHeaders(identity: MfeIdentity, config: AxiosRequestConfig = {}): AxiosRequestConfig {
   return { ...config, headers: { ...config.headers, ...getMfeHeaders(identity) } };
 }
@@ -42,6 +50,8 @@ export interface MfeHttpClient {
   head: <T = unknown>(url: string, config?: AxiosRequestConfig) => Promise<AxiosResponse<T>>;
   options: <T = unknown>(url: string, config?: AxiosRequestConfig) => Promise<AxiosResponse<T>>;
   request: <T = unknown>(config: AxiosRequestConfig) => Promise<AxiosResponse<T>>;
+  /** releaseMfe() bound to this client's identity — call it on unmount */
+  release: () => void;
 }
 
 export function createMfeHttp(identity: MfeIdentity): MfeHttpClient {
@@ -55,5 +65,6 @@ export function createMfeHttp(identity: MfeIdentity): MfeHttpClient {
     head: (url, config) => http().head(url, withMfeHeaders(identity, config)),
     options: (url, config) => http().options(url, withMfeHeaders(identity, config)),
     request: (config) => http().request(withMfeHeaders(identity, config)),
+    release: () => releaseMfe(identity.idntObjectPPR),
   };
 }

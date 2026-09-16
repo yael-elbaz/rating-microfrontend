@@ -9,6 +9,7 @@ console.log("[host] same instance?", http() === http());
 
 export default function App() {
   const [hostResponse, setHostResponse] = useState<unknown>(null);
+  const [showMfe, setShowMfe] = useState(true);
 
   const callFromHost = () => pingHost().then(setHostResponse).catch(console.error);
 
@@ -19,9 +20,13 @@ export default function App() {
       <pre id="host-response">{hostResponse ? JSON.stringify(hostResponse, null, 2) : ""}</pre>
 
       <section style={{ border: "1px dashed #888", padding: 16, marginTop: 16 }}>
-        <Suspense fallback={<div>Loading mfe-example…</div>}>
-          <MfeExampleApp />
-        </Suspense>
+        {/* Closing and reopening the MFE unmounts it, which releases its isFirstMfeRequest flag */}
+        <button onClick={() => setShowMfe((v) => !v)}>{showMfe ? "Close" : "Open"} mfe-example</button>
+        {showMfe && (
+          <Suspense fallback={<div>Loading mfe-example…</div>}>
+            <MfeExampleApp />
+          </Suspense>
+        )}
       </section>
     </main>
   );

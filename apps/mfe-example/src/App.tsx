@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { http as sharedHttp } from "digital-utils";
+import { http } from "./api/httpClient";
 import { getExampleData } from "./api/exampleApi";
 
 export default function App() {
@@ -11,6 +12,10 @@ export default function App() {
     if (hostHttp) console.log("[mfe-example] same instance as host?", sharedHttp() === hostHttp);
 
     getExampleData("1").then(setData).catch(console.error);
+
+    // The MFE is being closed: forget it already called, so the next time it opens
+    // its first request reports isFirstMfeRequest=true again
+    return () => http.release();
   }, []);
 
   return (

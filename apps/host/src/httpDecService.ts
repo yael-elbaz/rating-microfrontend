@@ -23,14 +23,14 @@ const HttpDecService = (function () {
     microFrontentRefrerr: HOST_CLIENT_URL,
   };
 
+  // In-memory flag, not a cookie: module state is recreated on every application load (F5, new tab,
+  // full navigation), so the first request of each load reports true and the rest of that load false
+  let firstHostRequestSent = false;
+
   function resolveIsFirstHostRequest(): string {
-    const current = ManageCookies.GetCookie("isFirstHostRequest");
-    if (current === undefined || current === "") {
-      // Session cookie (no Expires/max-age): survives F5 and new tabs, resets only when the browser closes
-      ManageCookies.SetCookie("isFirstHostRequest", "false");
-      return "true";
-    }
-    return "false";
+    if (firstHostRequestSent) return "false";
+    firstHostRequestSent = true;
+    return "true";
   }
 
   function ensureSessionGuid(): string {
