@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { http as sharedHttp } from "digital-utils";
-import { http } from "./api/httpClient";
+import { release } from "./api/httpClient";
 import { getExampleData } from "./api/exampleApi";
 
 export default function App() {
@@ -15,7 +15,7 @@ export default function App() {
 
     // The MFE is being closed: forget it already called, so the next time it opens
     // its first request reports isFirstMfeRequest=true again
-    return () => http.release();
+    return () => release();
   }, []);
 
   return (

@@ -2,7 +2,7 @@ import ManageCookies from "./manageCookies";
 
 const ENV = process.env.SVIVA ?? "dev-";
 export const HOST_CLIENT_URL = `https://${ENV}workspace.ips.gov.il/Host_Client`;
-export const IDNT_OBJECT_PPR = process.env.IDNT_OBJECT_PPR ?? ""; // קבוע, מגיע מ-config/env
+export const IDNT_OBJECT_PPR = Number(process.env.IDNT_OBJECT_PPR); // קבוע מספרי, מגיע מ-config/env
 export const IPS_PPRID = process.env.IPS_PPRID ?? ""; // קבוע, מגיע מ-config/env - idnt system של ההוסט
 const IDNT_HOST_MAFIL = process.env.IDNT_HOST_MAFIL ?? ""; // קבוע, מגיע מ-config/env - לא נוצר ב-runtime
 
@@ -17,7 +17,7 @@ const HttpDecService = (function () {
   }
 
   const staticHeaders: Record<string, string> = {
-    idntObjectPPR: IDNT_OBJECT_PPR,
+    idntObjectPPR: String(IDNT_OBJECT_PPR), // מזהה מספרי - נשלח כמחרוזת, כי headers הם תמיד מחרוזות
     IPS_PPRID: IPS_PPRID,
     idntHostMafil: IDNT_HOST_MAFIL,
     microFrontentRefrerr: HOST_CLIENT_URL,

@@ -7,7 +7,7 @@ const setupMockApi = require("../../tools/mockApi");
 
 const env = {
   MFE_BASE_URL: process.env.MFE_BASE_URL ?? "http://localhost:3001",
-  IDNT_OBJECT_PPR: process.env.IDNT_OBJECT_PPR ?? "mfe-example",
+  IDNT_OBJECT_PPR: process.env.IDNT_OBJECT_PPR ?? "2001", // numeric id, kept as a string so DefinePlugin inlines a string literal
   IPS_PPRID: process.env.IPS_PPRID ?? "poc-mfe-example-ips-pprid",
 };
 
@@ -18,9 +18,21 @@ module.exports = {
     publicPath: "auto",
     clean: true,
   },
+  // "source-map" gives accurate, fully-mapped stacks for cross-package debugging
+  devtool: "source-map",
   resolve: { extensions: [".tsx", ".ts", ".js"] },
   module: {
-    rules: [{ test: /\.tsx?$/, loader: "ts-loader", exclude: /node_modules/, options: { transpileOnly: true } }],
+    rules: [
+      { test: /\.tsx?$/, loader: "ts-loader", exclude: /node_modules/, options: { transpileOnly: true } },
+      {
+        // consume digital-utils' own .js.map so breakpoints land in its .ts source, not in dist/*.js.
+        // scoped to that package: running source-map-loader over all of node_modules is slow and noisy
+        test: /\.js$/,
+        enforce: "pre",
+        use: ["source-map-loader"],
+        include: [path.resolve(__dirname, "../../packages/digital-utils/dist")],
+      },
+    ],
   },
   devServer: {
     port: 3001,

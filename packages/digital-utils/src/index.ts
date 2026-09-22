@@ -34,5 +34,6 @@ export type {
   AxiosInstance,
   InternalAxiosRequestConfig,
 } from "./httpClient";
-export { createMfeHttp, getMfeHeaders, releaseMfe } from "./mfeContext";
+export { createMfeHttp, getMfeHeaders } from "./mfeContext";
+export { releaseMfe } from "./mfeRegistry";
 export type { MfeIdentity, MfeHttpClient } from "./mfeContext";

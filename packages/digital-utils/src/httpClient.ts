@@ -7,6 +7,7 @@ import axios, {
   AxiosRequestHeaders,
   CanceledError,
 } from 'axios';
+import { consumeIsFirstRequest } from './mfeRegistry';
 
 let instance: AxiosInstance | null = null;
 
@@ -48,6 +49,17 @@ export interface InterceptorHandlers<V> {
   onRejected?: (error: unknown) => unknown;
 }
 
+// ─── Header helpers ───────────────────────────────────────────────────────────
+
+/** קריאת header ללא תלות ב-case, כדי שזהות שנכתבה בכתיב אחר לא תיקרא כחסרה */
+function readHeader(headers: Record<string, unknown>, name: string): string | undefined {
+  const target = name.toLowerCase();
+  for (const [key, value] of Object.entries(headers)) {
+    if (key.toLowerCase() === target && value != null && value !== '') return String(value);
+  }
+  return undefined;
+}
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
 export function initHttpClient(config: HttpClientConfig, force = false): void {
@@ -68,10 +80,19 @@ export function initHttpClient(config: HttpClientConfig, force = false): void {
       }
 
       const dynamicHeaders = config.getHeaders?.() ?? {};
-      req.headers = {
+      const headers: Record<string, unknown> = {
         ...dynamicHeaders, // שכבת הוסט/סשן
         ...req.headers,    // שכבת ה-MFE הספציפי - מנצחת בהתנגשות מפתחות
-      } as AxiosRequestHeaders;
+      };
+
+      // isFirstMfeRequest נגזר מה-idntObjectPPR האפקטיבי של הבקשה: של ה-MFE אם הוסיף שכבה, אחרת של ההוסט.
+      // כך כל זהות מחזיקה דגל נפרד, ובקשה של MFE לא "צורכת" את הדגל של ההוסט או של MFE אחר.
+      const idntObjectPPR = readHeader(headers, 'idntObjectPPR');
+      if (idntObjectPPR) {
+        headers.isFirstMfeRequest = String(consumeIsFirstRequest(idntObjectPPR));
+      }
+
+      req.headers = headers as AxiosRequestHeaders;
 
       return req;
     },
@@ -103,36 +124,37 @@ export function http(): AxiosInstance {
 }
 
 // ─── Convenience methods ──────────────────────────────────────────────────────
+// T מוגדר כברירת מחדל ל-any בדיוק כמו ב-axios, כדי שההתנהגות תהיה זהה למופע המשותף
 
-export function get<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+export function get<T = any>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
   return http().get<T>(url, config);
 }
 
-export function post<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+export function post<T = any>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
   return http().post<T>(url, data, config);
 }
 
-export function put<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+export function put<T = any>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
   return http().put<T>(url, data, config);
 }
 
-export function patch<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+export function patch<T = any>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
   return http().patch<T>(url, data, config);
 }
 
-export function del<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+export function del<T = any>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
   return http().delete<T>(url, config);
 }
 
-export function head<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+export function head<T = any>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
   return http().head<T>(url, config);
 }
 
-export function options<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+export function options<T = any>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
   return http().options<T>(url, config);
 }
 
-export function request<T = unknown>(config: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+export function request<T = any>(config: AxiosRequestConfig): Promise<AxiosResponse<T>> {
   return http().request<T>(config);
 }
 

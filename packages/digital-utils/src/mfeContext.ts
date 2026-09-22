@@ -1,55 +1,42 @@
 import { AxiosRequestConfig, AxiosResponse } from "axios";
 import { http } from "./httpClient";
-
-const calledMfes = new Set<string>();
-
-function getRegistry(): Set<string> {
-  const w = window as any;
-  if (!w.__mfeCallRegistry) w.__mfeCallRegistry = calledMfes;
-  return w.__mfeCallRegistry as Set<string>;
-}
+import { releaseMfe } from "./mfeRegistry";
 
 export interface MfeIdentity {
-  idntObjectPPR: string;
+  idntObjectPPR: number;
   ipsPprId: string; // idnt system of the MFE, sent as IPS_PPRID
   microFrontentRefrerr: string;
 }
 
+/**
+ * Identity headers for this MFE. isFirstMfeRequest is deliberately NOT here: it is derived in the
+ * httpClient request interceptor from the request's effective idntObjectPPR, so the host — which has
+ * no MFE client and supplies its idntObjectPPR through initHttpClient's getHeaders — gets the flag too.
+ */
 export function getMfeHeaders(identity: MfeIdentity): Record<string, string> {
-  const registry = getRegistry();
-  const isFirstMfeRequest = !registry.has(identity.idntObjectPPR);
-  registry.add(identity.idntObjectPPR);
-
   return {
-    idntObjectPPR: identity.idntObjectPPR, // overrides the host-layer idntObjectPPR for this MFE's requests
+    idntObjectPPR: String(identity.idntObjectPPR), // numeric id, sent as its string form; overrides the host-layer idntObjectPPR for this MFE's requests
     IPS_PPRID: identity.ipsPprId, // overrides the host-layer IPS_PPRID for this MFE's requests
     microFrontentRefrerr: identity.microFrontentRefrerr,
-    isFirstMfeRequest: String(isFirstMfeRequest),
   };
-}
-
-/**
- * Forgets that this MFE already made a request, so its next request reports isFirstMfeRequest=true again.
- * Call it when the MFE is closed/unmounted — otherwise the flag stays false until the next full page load.
- */
-export function releaseMfe(idntObjectPPR: string): void {
-  getRegistry().delete(idntObjectPPR);
 }
 
 function withMfeHeaders(identity: MfeIdentity, config: AxiosRequestConfig = {}): AxiosRequestConfig {
   return { ...config, headers: { ...config.headers, ...getMfeHeaders(identity) } };
 }
 
-// Same shape as the shared axios instance: the full AxiosResponse is returned, nothing is unwrapped
+// Same shape as the shared axios instance: the full AxiosResponse is returned, nothing is unwrapped.
+// T defaults to `any` exactly as axios does, so `http()({...})` call sites migrate to request({...})
+// without their `response.data` handling changing type. Pass T explicitly for a typed response.
 export interface MfeHttpClient {
-  get: <T = unknown>(url: string, config?: AxiosRequestConfig) => Promise<AxiosResponse<T>>;
-  post: <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig) => Promise<AxiosResponse<T>>;
-  put: <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig) => Promise<AxiosResponse<T>>;
-  patch: <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig) => Promise<AxiosResponse<T>>;
-  delete: <T = unknown>(url: string, config?: AxiosRequestConfig) => Promise<AxiosResponse<T>>;
-  head: <T = unknown>(url: string, config?: AxiosRequestConfig) => Promise<AxiosResponse<T>>;
-  options: <T = unknown>(url: string, config?: AxiosRequestConfig) => Promise<AxiosResponse<T>>;
-  request: <T = unknown>(config: AxiosRequestConfig) => Promise<AxiosResponse<T>>;
+  get: <T = any>(url: string, config?: AxiosRequestConfig) => Promise<AxiosResponse<T>>;
+  post: <T = any>(url: string, data?: unknown, config?: AxiosRequestConfig) => Promise<AxiosResponse<T>>;
+  put: <T = any>(url: string, data?: unknown, config?: AxiosRequestConfig) => Promise<AxiosResponse<T>>;
+  patch: <T = any>(url: string, data?: unknown, config?: AxiosRequestConfig) => Promise<AxiosResponse<T>>;
+  delete: <T = any>(url: string, config?: AxiosRequestConfig) => Promise<AxiosResponse<T>>;
+  head: <T = any>(url: string, config?: AxiosRequestConfig) => Promise<AxiosResponse<T>>;
+  options: <T = any>(url: string, config?: AxiosRequestConfig) => Promise<AxiosResponse<T>>;
+  request: <T = any>(config: AxiosRequestConfig) => Promise<AxiosResponse<T>>;
   /** releaseMfe() bound to this client's identity — call it on unmount */
   release: () => void;
 }
